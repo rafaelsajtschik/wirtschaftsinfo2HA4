@@ -392,6 +392,140 @@ public class OdooAdapter {
                 "sale.order.line", "create",
                 values
         ));
+  
+   /* 
+   adding own functions
+   */
+    
+    public List<Customer> loadAllCustomers() throws XmlRpcException {
 
+        List res = asList((Object[]) objectClient.execute(
+                "execute_kw", asList(
+                        config.getDb(),
+                        config.getUserId(),
+                        config.getPassword(),
+                        "res.partner",
+                        "search_read",
+                        asList(
+                                asList(
+                                        asList("is_company", "=", false),
+                                        asList("customer", "=", true)
+                                )
+                        ),
+                        new HashMap() {
+                    {
+                        put("fields", asList(
+                                "name",
+                                "street",
+                                "city"
+                        ));
+                        put("offset", 0);
+                    }
+                })));
+        List<Customer> results = new LinkedList<>();
+
+        res.forEach((odooResultObject) -> {
+            
+            int id = (int) ((HashMap) odooResultObject).get("id");
+            String name = (String) ((HashMap) odooResultObject).get("name");
+            
+            
+            Customer tempCust = new Customer(id, name);
+            
+            tempCust.setCity(((HashMap) odooResultObject).get("city").toString());
+            tempCust.setStreet((((HashMap) odooResultObject).get("street").toString()));
+            
+            results.add(tempCust);
+        });
+        System.out.print(results);
+        
+        
+        return results;
+    }
+    
+    public int createCustomerWithName(String name) throws XmlRpcException{
+        HashMap map = new HashMap();
+        map.put("name", name);
+        List values = asList(map);
+
+
+        int id = (Integer) objectClient.execute("execute_kw", asList(
+                config.getDb(),
+                config.getUserId(),
+                config.getPassword(),
+                "res.partner", "create",
+                values
+        ));
+
+        return id;
+    }
+    
+    
+    public List<Customer> readAllCustomers() throws XmlRpcException {
+
+        List res = asList((Object[]) objectClient.execute(
+                "execute_kw", asList(
+                        config.getDb(),
+                        config.getUserId(),
+                        config.getPassword(),
+                        "res.partner",
+                        "search_read",
+                        asList(
+                                asList(
+                                        asList("is_company", "=", false),
+                                        asList("customer", "=", true)
+                                )
+                        ),
+                        new HashMap() {
+                    {
+                        put("fields", asList(
+                                "name",
+                                "comment"
+                        ));
+                        put("offset", 0);
+                    }
+                })));
+        List<Customer> results = new LinkedList<>();
+
+        res.forEach((odooResultObject) -> {
+            results.add(new Customer((HashMap) odooResultObject));
+        });
+        return results;
+    }
+    
+    public List<Product> readAllProducts() throws XmlRpcException {
+
+        List odooResultList = asList((Object[]) objectClient.execute(
+                "execute_kw", asList(
+                        config.getDb(),
+                        config.getUserId(),
+                        config.getPassword(),
+                        "product.product",
+                        "search_read",
+                        asList(
+                                asList(
+                                        asList("price", ">", 0.0)
+                                )
+                        ),
+                        new HashMap() {
+                    {
+                        put("fields", asList(
+                                "name",
+                                "product_tmpl_id"
+                        ));
+                        put("offset", 0);
+                    }
+                })));
+        List<Product> results = new LinkedList<>();
+        for (Object odooResultObject : odooResultList) {
+            Product p = new Product((HashMap) odooResultObject);
+            p.setPrice(
+                    readListPrice(
+                            (Integer) ((Object[]) ((HashMap) odooResultObject).get("product_tmpl_id"))[0]
+                    )
+            );
+            results.add(p);
+        }
+        return results;
     }
 }
