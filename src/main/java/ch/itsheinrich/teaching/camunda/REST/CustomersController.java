@@ -42,4 +42,17 @@ public class CustomersController {
             return new ArrayList<>();
         }
     }
+ /**
+ *
+ * @author Rafael Sajtschik
+ */
+     @RequestMapping(method = RequestMethod.GET, value = "/allcustomers", produces = APPLICATION_JSON_VALUE)
+    public List<Customer> getAllCustomerNames() {
+        try {
+            return AdapterFactory.getOdooAdapter().readAllCustomers();
+        }
+        catch(Exception e) {
+            return new ArrayList<>();
+        }
+}
 }
